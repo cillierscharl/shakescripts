@@ -1,4 +1,7 @@
 (async function () {
+    // Clear all the warnings and errors from the shakepay console output.
+    console.clear();
+
     var pullMore = true;
     var swapperBalance = [];
     var swapperTransactions = [];
@@ -19,7 +22,7 @@
     */
 
     while (pullMore === true) {
-        console.log("pulling 2000 transactions from Shakepay api")
+        console.log("Pulling 2000 transactions from Shakepay api")
         var transactionsResponse = await fetch("https://api.shakepay.com/transactions/history", { "headers": { "accept": "application/json", "accept-language": "en-US,en;q=0.9,fr;q=0.8", "authorization": window.sessionStorage.getItem("feathers-jwt"), "content-type": "application/json", "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"90\", \"Microsoft Edge\";v=\"90\"", "sec-ch-ua-mobile": "?0", "sec-fetch-dest": "empty", "sec-fetch-mode": "cors", "sec-fetch-site": "same-site" }, "referrerPolicy": "same-origin", "body": "{\"pagination\":{\"descending\":true,\"rowsPerPage\":2000,\"page\":" + page + "},\"filterParams\":{}}", "method": "POST", "mode": "cors", "credentials": "include" })
         var transactionsData = await transactionsResponse.json();
 
@@ -77,26 +80,39 @@
         page++;
     }
 
-
-    var strPrint = "";
-    var tierCounter = 0;
-    strPrint += "---------- You owe the following people ----------\n";
-    for (let i in swapperBalance) {
-        tierCounter++;
-        if (swapperBalance[i] > 1) {
-            strPrint += "" + swapperTransactions[i][0].createdAt + " for $" + swapperTransactions[i][0].amount + " (" + swapperTransactions[i][0].direction + ") | " + i + " | " + swapperBalance[i].toFixed(2) + "\n";
+    class SwapperLog {
+        constructor(id, createdAt, amount, direction, balance) {
+            this.id = id;
+            this.createdAt = createdAt;
+            this.amount = amount;
+            this.direction = direction;
+            this.balance = balance;
         }
     }
-    strPrint += "\n---------- The following people owe you ----------\n";
+
+    var swapperCount = 0;
+    console.log("---------- You owe the following people ----------");
+    var swapperLogs = [];
+    for (let i in swapperBalance) {
+        swapperCount++;
+        if (swapperBalance[i] > 1) {
+            var log = new SwapperLog(i, swapperTransactions[i][0].createdAt, swapperTransactions[i][0].amount, "(" + swapperTransactions[i][0].direction + ")", i, swapperBalance[i].toFixed(2));
+            swapperLogs.push(log);
+        }
+    }
+    console.table(swapperLogs);
+
+    swapperLogs = [];
+    console.log("---------- The following people owe you ----------");
     for (let i in swapperBalance) {
         if (swapperBalance[i] < -1) {
-            strPrint += "" + swapperTransactions[i][0].createdAt + " for $" + swapperTransactions[i][0].amount + " (" + swapperTransactions[i][0].direction + ") | " + i + " | " + swapperBalance[i].toFixed(2) + "\n";
+            var log = new SwapperLog(i, swapperTransactions[i][0].createdAt, swapperTransactions[i][0].amount, "(" + swapperTransactions[i][0].direction + ")", swapperBalance[i].toFixed(2));
+            swapperLogs.push(log);
         }
     }
+    console.table(swapperLogs);
 
-    strPrint += "\n\nSo far you have swapped with " + tierCounter + " different Shakepay friends since April 20 🏓";
+    console.log("\n\nSo far you have swapped with " + swapperCount + " different Shakepay friends since April 20 🏓");
 
-    strPrint += "\n\nSo far you have swapped with " + swapperSinceMay3rd.length + " different Shakepay friends since May 3rd 🏓";
-
-    console.log(strPrint);
+    console.log("\n\nSo far you have swapped with " + Object.keys(swapperSinceMay3rd).length + " different Shakepay friends since May 3rd 🏓");
 })();
